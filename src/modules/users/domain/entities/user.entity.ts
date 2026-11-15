@@ -2,9 +2,11 @@ import { Email } from '../value-objects/email.vo.js';
 import { Username } from '../value-objects/username.vo.js';
 
 import { InvalidUserDisplayNameError } from '../exceptions/invalid-user-display-name.error.js';
+
 import type {
   CreateUserProps,
   UpdateUserProfileProps,
+  ReconstituteUserProps,
 } from '../types/user.types.js';
 
 export class User {
@@ -24,24 +26,57 @@ export class User {
       throw new Error('User ID cannot be empty.');
     }
 
-    const displayName = props.displayName.trim();
-
-    if (displayName.length < 2 || displayName.length > 50) {
-      throw new InvalidUserDisplayNameError();
-    }
-
     const now = new Date();
 
     return new User(
-      props.id,
+      props.id.trim(),
       props.email,
       props.username,
-      displayName,
+      User.validateDisplayName(props.displayName),
       props.bio?.trim() || null,
       props.avatarUrl?.trim() || null,
       now,
       now,
     );
+  }
+
+  static reconstitute(props: ReconstituteUserProps): User {
+    return new User(
+      props.id,
+      props.email,
+      props.username,
+      props.displayName,
+      props.bio,
+      props.avatarUrl,
+      props.createdAt,
+      props.updatedAt,
+    );
+  }
+
+  private static validateDisplayName(value: string): string {
+    const displayName = value.trim();
+
+    if (displayName.length < 2 || displayName.length > 50) {
+      throw new InvalidUserDisplayNameError();
+    }
+
+    return displayName;
+  }
+
+  updateProfile(props: UpdateUserProfileProps): void {
+    if (props.displayName !== undefined) {
+      this._displayName = User.validateDisplayName(props.displayName);
+    }
+
+    if (props.bio !== undefined) {
+      this._bio = props.bio?.trim() || null;
+    }
+
+    if (props.avatarUrl !== undefined) {
+      this._avatarUrl = props.avatarUrl?.trim() || null;
+    }
+
+    this._updatedAt = new Date();
   }
 
   get id(): string {
@@ -74,27 +109,5 @@ export class User {
 
   get updatedAt(): Date {
     return this._updatedAt;
-  }
-
-  updateProfile(props: UpdateUserProfileProps): void {
-    if (props.displayName !== undefined) {
-      const displayName = props.displayName.trim();
-
-      if (displayName.length < 2 || displayName.length > 50) {
-        throw new InvalidUserDisplayNameError();
-      }
-
-      this._displayName = displayName;
-    }
-
-    if (props.bio !== undefined) {
-      this._bio = props.bio?.trim() || null;
-    }
-
-    if (props.avatarUrl !== undefined) {
-      this._avatarUrl = props.avatarUrl?.trim() || null;
-    }
-
-    this._updatedAt = new Date();
   }
 }
