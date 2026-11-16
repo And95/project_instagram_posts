@@ -2,12 +2,40 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input CreateUserInputType {
+  avatarUrl: String
+  bio: String
+  displayName: String!
+  email: String!
+  username: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
 type HealthStatusOutput {
   service: String!
   status: String!
   timestamp: String!
 }
 
+type Mutation {
+  createUser(input: CreateUserInputType!): User!
+}
+
 type Query {
   health: HealthStatusOutput!
+}
+
+type User {
+  avatarUrl: String
+  bio: String
+  createdAt: DateTime!
+  displayName: String!
+  email: String!
+  id: ID!
+  updatedAt: DateTime!
+  username: String!
 }
