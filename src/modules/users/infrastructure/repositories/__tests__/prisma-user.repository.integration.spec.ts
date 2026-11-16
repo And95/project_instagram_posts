@@ -2,15 +2,7 @@ import 'dotenv/config';
 
 import { randomUUID } from 'node:crypto';
 
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { ConfigService } from '@nestjs/config';
 
 import { PrismaService } from '../../../../../infrastructure/database/prisma.service.js';
@@ -29,8 +21,6 @@ describe('PrismaUserRepository (Integration)', () => {
   let prisma: PrismaService;
   let repository: PrismaUserRepository;
 
-  let userId: string;
-
   const createdUserIds: string[] = [];
 
   beforeAll(async () => {
@@ -40,10 +30,6 @@ describe('PrismaUserRepository (Integration)', () => {
     await prisma.$connect();
 
     repository = new PrismaUserRepository(prisma);
-  });
-
-  beforeEach(() => {
-    userId = randomUUID();
   });
 
   afterAll(async () => {

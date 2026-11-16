@@ -15,19 +15,29 @@ describe('CreateUserUseCase', () => {
   let userRepository: UserRepository;
   let createUserUseCase: CreateUserUseCase;
 
+  let findByEmail: ReturnType<typeof vi.fn<UserRepository['findByEmail']>>;
+  let findByUsername: ReturnType<
+    typeof vi.fn<UserRepository['findByUsername']>
+  >;
+  let save: ReturnType<typeof vi.fn<UserRepository['save']>>;
+
   beforeEach(() => {
+    findByEmail = vi.fn<UserRepository['findByEmail']>();
+    findByUsername = vi.fn<UserRepository['findByUsername']>();
+    save = vi.fn<UserRepository['save']>();
+
     userRepository = {
-      findById: vi.fn(),
-      findByEmail: vi.fn(),
-      findByUsername: vi.fn(),
-      save: vi.fn(),
+      findById: vi.fn<UserRepository['findById']>(),
+      findByEmail,
+      findByUsername,
+      save,
     };
 
     createUserUseCase = new CreateUserUseCase(userRepository);
 
-    vi.mocked(userRepository.findByEmail).mockResolvedValue(null);
-    vi.mocked(userRepository.findByUsername).mockResolvedValue(null);
-    vi.mocked(userRepository.save).mockResolvedValue(undefined);
+    findByEmail.mockResolvedValue(null);
+    findByUsername.mockResolvedValue(null);
+    save.mockResolvedValue(undefined);
   });
 
   const input = {
@@ -46,19 +56,17 @@ describe('CreateUserUseCase', () => {
       expect(user.username.value).toBe('andre_gonzaga');
       expect(user.displayName).toBe('André Gonzaga');
 
-      expect(userRepository.findByEmail).toHaveBeenCalledWith(
-        Email.create(input.email),
-      );
+      expect(findByEmail).toHaveBeenCalledWith(Email.create(input.email));
 
-      expect(userRepository.findByUsername).toHaveBeenCalledWith(
+      expect(findByUsername).toHaveBeenCalledWith(
         Username.create(input.username),
       );
 
-      expect(userRepository.save).toHaveBeenCalledWith(user);
+      expect(save).toHaveBeenCalledWith(user);
     });
 
     it('should reject an existing email', async () => {
-      vi.mocked(userRepository.findByEmail).mockResolvedValue(
+      findByEmail.mockResolvedValue(
         User.create({
           id: 'existing-user',
           email: Email.create(input.email),
@@ -71,12 +79,12 @@ describe('CreateUserUseCase', () => {
         UserEmailAlreadyExistsError,
       );
 
-      expect(userRepository.save).not.toHaveBeenCalled();
-      expect(userRepository.findByUsername).not.toHaveBeenCalled();
+      expect(save).not.toHaveBeenCalled();
+      expect(findByUsername).not.toHaveBeenCalled();
     });
 
     it('should reject an existing username', async () => {
-      vi.mocked(userRepository.findByUsername).mockResolvedValue(
+      findByUsername.mockResolvedValue(
         User.create({
           id: 'existing-user',
           email: Email.create('existing@example.com'),
@@ -89,7 +97,7 @@ describe('CreateUserUseCase', () => {
         UsernameAlreadyExistsError,
       );
 
-      expect(userRepository.save).not.toHaveBeenCalled();
+      expect(save).not.toHaveBeenCalled();
     });
 
     it('should reject an invalid email', async () => {
@@ -100,8 +108,8 @@ describe('CreateUserUseCase', () => {
         }),
       ).rejects.toThrow();
 
-      expect(userRepository.findByEmail).not.toHaveBeenCalled();
-      expect(userRepository.save).not.toHaveBeenCalled();
+      expect(findByEmail).not.toHaveBeenCalled();
+      expect(save).not.toHaveBeenCalled();
     });
 
     it('should reject an invalid username', async () => {
@@ -112,14 +120,12 @@ describe('CreateUserUseCase', () => {
         }),
       ).rejects.toThrow();
 
-      expect(userRepository.findByEmail).not.toHaveBeenCalled();
-      expect(userRepository.save).not.toHaveBeenCalled();
+      expect(findByEmail).not.toHaveBeenCalled();
+      expect(save).not.toHaveBeenCalled();
     });
 
     it('should propagate repository persistence errors', async () => {
-      vi.mocked(userRepository.save).mockRejectedValue(
-        new Error('Database error'),
-      );
+      save.mockRejectedValue(new Error('Database error'));
 
       await expect(createUserUseCase.execute(input)).rejects.toThrow(
         'Database error',

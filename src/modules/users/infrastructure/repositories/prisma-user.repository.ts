@@ -121,12 +121,19 @@ export class PrismaUserRepository implements UserRepository {
       const constraint =
         prismaError.meta?.driverAdapterError?.cause?.constraint?.index;
 
-      const fields = [
-        Array.isArray(target) ? target.join(' ') : String(target ?? ''),
-        String(constraint ?? ''),
-      ]
-        .join(' ')
-        .toLowerCase();
+      let targetFields = '';
+
+      if (typeof target === 'string') {
+        targetFields = target;
+      } else if (Array.isArray(target)) {
+        targetFields = target
+          .filter((field): field is string => typeof field === 'string')
+          .join(' ');
+      }
+
+      const constraintIndex = typeof constraint === 'string' ? constraint : '';
+
+      const fields = `${targetFields} ${constraintIndex}`.toLowerCase();
 
       if (fields.includes('email')) {
         throw new UserEmailAlreadyExistsError();
