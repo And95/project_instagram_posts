@@ -46,8 +46,10 @@ input LoginGraphqlInput {
 
 type Mutation {
   createPost(input: CreatePostGraphqlInput!): PostOutput!
+  deletePost(postId: String!): Boolean!
   login(input: LoginGraphqlInput!): AuthPayloadOutput!
   registerUser(input: RegisterUserGraphqlInput!): AuthUserOutput!
+  updatePost(input: UpdatePostGraphqlInput!, postId: String!): PostOutput!
 }
 
 type PostAuthorOutput {
@@ -81,4 +83,9 @@ input RegisterUserGraphqlInput {
   email: String!
   password: String!
   username: String!
+}
+
+input UpdatePostGraphqlInput {
+  caption: String
+  imageUrl: String
 }

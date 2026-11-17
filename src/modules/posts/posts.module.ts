@@ -17,6 +17,8 @@ import { POST_REPOSITORY } from './posts.tokens.js';
 import { USER_REPOSITORY } from '../users/users.module.js';
 import { PostsResolver } from './presentation/graphql/posts.resolver.js';
 import { AuthModule } from '../auth/auth.module.js';
+import { UpdatePostUseCase } from './application/use-cases/update-post.use-case.js';
+import { DeletePostUseCase } from './application/use-cases/delete-post.use-case.js';
 
 @Module({
   imports: [PrismaModule, UsersModule, AuthModule],
@@ -51,12 +53,26 @@ import { AuthModule } from '../auth/auth.module.js';
       },
       inject: [POST_REPOSITORY],
     },
+    {
+      provide: UpdatePostUseCase,
+      useFactory: (postRepository: PostRepository) =>
+        new UpdatePostUseCase(postRepository),
+      inject: [POST_REPOSITORY],
+    },
+    {
+      provide: DeletePostUseCase,
+      useFactory: (postRepository: PostRepository) =>
+        new DeletePostUseCase(postRepository),
+      inject: [POST_REPOSITORY],
+    },
   ],
 
   exports: [
     CreatePostUseCase,
     GetPostByIdUseCase,
     GetPostsByAuthorUseCase,
+    UpdatePostUseCase,
+    DeletePostUseCase,
     POST_REPOSITORY,
   ],
 })

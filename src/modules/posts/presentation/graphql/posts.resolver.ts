@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   NotFoundException,
   UseGuards,
 } from '@nestjs/common';
@@ -32,6 +33,11 @@ import type { VerifiedTokenPayload } from '../../../auth/domain/services/token-v
 import { InvalidPostImageUrlError } from '../../domain/exceptions/invalid-post-image-url.error.js';
 import { InvalidPostCaptionError } from '../../domain/exceptions/invalid-post-caption.error.js';
 import { UserNotFoundError } from '../../../users/domain/exceptions/user-not-found.error.js';
+import { UpdatePostUseCase } from '../../application/use-cases/update-post.use-case.js';
+import { UpdatePostGraphqlInput } from './inputs/update-post.input.js';
+import { PostNotFoundError } from '../../domain/exceptions/post-not-found.error.js';
+import { PostOwnershipError } from '../../domain/exceptions/post-ownership.error.js';
+import { DeletePostUseCase } from '../../application/use-cases/delete-post.use-case.js';
 
 @Resolver(() => PostOutput)
 export class PostsResolver {
@@ -39,6 +45,8 @@ export class PostsResolver {
     private readonly createPostUseCase: CreatePostUseCase,
     private readonly getPostByIdUseCase: GetPostByIdUseCase,
     private readonly getUserByIdUseCase: GetUserByIdUseCase,
+    private readonly updatePostUseCase: UpdatePostUseCase,
+    private readonly deletePostUseCase: DeletePostUseCase,
   ) {}
 
   @Mutation(() => PostOutput)
@@ -79,6 +87,42 @@ export class PostsResolver {
     return this.toAuthorOutput(author);
   }
 
+  @Mutation(() => PostOutput)
+  @UseGuards(JwtAuthGuard)
+  async updatePost(
+    @Args('postId') postId: string,
+    @Args('input', { type: () => UpdatePostGraphqlInput })
+    input: UpdatePostGraphqlInput,
+    @CurrentUser() user: VerifiedTokenPayload,
+  ): Promise<PostOutput> {
+    try {
+      const post = await this.updatePostUseCase.execute(
+        postId,
+        user.sub,
+        input,
+      );
+
+      return this.toPostOutput(post);
+    } catch (error: unknown) {
+      this.handleError(error);
+    }
+  }
+
+  @Mutation(() => Boolean)
+  @UseGuards(JwtAuthGuard)
+  async deletePost(
+    @Args('postId') postId: string,
+    @CurrentUser() user: VerifiedTokenPayload,
+  ): Promise<boolean> {
+    try {
+      await this.deletePostUseCase.execute(postId, user.sub);
+
+      return true;
+    } catch (error: unknown) {
+      this.handleError(error);
+    }
+  }
+
   private toPostOutput(post: Post): PostOutput {
     return {
       id: post.id,
@@ -109,6 +153,14 @@ export class PostsResolver {
 
     if (error instanceof UserNotFoundError) {
       throw new NotFoundException('User not found.');
+    }
+
+    if (error instanceof PostNotFoundError) {
+      throw new NotFoundException('Post not found.');
+    }
+
+    if (error instanceof PostOwnershipError) {
+      throw new ForbiddenException('You are not allowed to update this post.');
     }
 
     throw error;
