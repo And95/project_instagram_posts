@@ -1,0 +1,7 @@
+export const AUTH_ACCOUNT_REPOSITORY = Symbol('AUTH_ACCOUNT_REPOSITORY');
+
+export const PASSWORD_HASHER = Symbol('PASSWORD_HASHER');
+
+export const TOKEN_GENERATOR = Symbol('TOKEN_GENERATOR');
+
+export const TOKEN_VERIFIER = Symbol('TOKEN_VERIFIER');

@@ -2,12 +2,25 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-input CreateUserInputType {
+type AuthPayloadOutput {
+  accessToken: String!
+  user: AuthUserOutput!
+}
+
+type AuthUserOutput {
   avatarUrl: String
   bio: String
+  createdAt: DateTime!
   displayName: String!
   email: String!
+  id: ID!
+  updatedAt: DateTime!
   username: String!
+}
+
+type AuthenticatedIdentityOutput {
+  email: String!
+  id: ID!
 }
 
 """
@@ -21,21 +34,26 @@ type HealthStatusOutput {
   timestamp: String!
 }
 
+input LoginGraphqlInput {
+  email: String!
+  password: String!
+}
+
 type Mutation {
-  createUser(input: CreateUserInputType!): User!
+  login(input: LoginGraphqlInput!): AuthPayloadOutput!
+  registerUser(input: RegisterUserGraphqlInput!): AuthUserOutput!
 }
 
 type Query {
+  authenticatedIdentity: AuthenticatedIdentityOutput!
   health: HealthStatusOutput!
 }
 
-type User {
+input RegisterUserGraphqlInput {
   avatarUrl: String
   bio: String
-  createdAt: DateTime!
   displayName: String!
   email: String!
-  id: ID!
-  updatedAt: DateTime!
+  password: String!
   username: String!
 }

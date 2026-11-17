@@ -3,11 +3,13 @@ import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'node:path';
+import type { Request } from 'express';
 
 import { createObserveModule } from '@nestjs/observe';
 import { HealthModule } from './modules/health/health.module.js';
 import { PrismaModule } from './infrastructure/database/prisma.module.js';
 import { UsersModule } from './modules/users/users.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -20,6 +22,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
     PrismaModule,
     UsersModule,
+    AuthModule,
 
     ObserveModule.forRoot({
       appKey: process.env.OBSERVE_APP_KEY ?? 'YOUR_APP_KEY',
@@ -32,6 +35,10 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       sortSchema: true,
       graphiql: process.env.NODE_ENV !== 'production',
+
+      context: ({ req }: { req: Request }) => ({
+        req,
+      }),
     }),
 
     HealthModule,
