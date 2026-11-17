@@ -32,11 +32,16 @@ import type { VerifiedTokenPayload } from '../../domain/services/token-verifier.
 
 import { AuthenticatedIdentityOutput } from './outputs/authenticated-identity.output.js';
 
+import { GetCurrentUserUseCase } from '../../../users/application/use-cases/get-current-user.use-case.js';
+import { UserNotFoundError } from '../../../users/domain/exceptions/user-not-found.error.js';
+import { NotFoundException } from '@nestjs/common';
+
 @Resolver()
 export class AuthResolver {
   constructor(
     private readonly registerUserUseCase: RegisterUserUseCase,
     private readonly loginUserUseCase: LoginUserUseCase,
+    private readonly getCurrentUserUseCase: GetCurrentUserUseCase,
   ) {}
 
   @Query(() => AuthenticatedIdentityOutput)
@@ -48,6 +53,20 @@ export class AuthResolver {
       id: user.sub,
       email: user.email,
     };
+  }
+
+  @Query(() => AuthUserOutput)
+  @UseGuards(JwtAuthGuard)
+  async me(@CurrentUser() user: VerifiedTokenPayload): Promise<AuthUserOutput> {
+    try {
+      const currentUser = await this.getCurrentUserUseCase.execute({
+        userId: user.sub,
+      });
+
+      return this.toUserOutput(currentUser);
+    } catch (error: unknown) {
+      this.handleError(error);
+    }
   }
 
   @Mutation(() => AuthUserOutput)
@@ -118,6 +137,10 @@ export class AuthResolver {
       error instanceof InvalidPasswordError
     ) {
       throw new BadRequestException(error.message);
+    }
+
+    if (error instanceof UserNotFoundError) {
+      throw new NotFoundException('User not found.');
     }
 
     throw error;

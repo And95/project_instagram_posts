@@ -47,6 +47,7 @@ type Mutation {
 type Query {
   authenticatedIdentity: AuthenticatedIdentityOutput!
   health: HealthStatusOutput!
+  me: AuthUserOutput!
 }
 
 input RegisterUserGraphqlInput {

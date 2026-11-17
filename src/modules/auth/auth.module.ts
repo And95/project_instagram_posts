@@ -19,6 +19,8 @@ import { AuthResolver } from './presentation/graphql/auth.resolver.js';
 import { JwtAuthGuard } from './presentation/graphql/guards/jwt-auth.guard.js';
 import { JwtTokenVerifier } from './infrastructure/cryptography/jwt-token-verifier.js';
 
+import { UsersModule } from '../users/users.module.js';
+
 import {
   AUTH_ACCOUNT_REPOSITORY,
   PASSWORD_HASHER,
@@ -27,7 +29,7 @@ import {
 } from './auth.tokens.js';
 
 @Module({
-  imports: [ConfigModule, PrismaModule],
+  imports: [ConfigModule, PrismaModule, UsersModule],
   providers: [
     AuthResolver,
     JwtAuthGuard,
