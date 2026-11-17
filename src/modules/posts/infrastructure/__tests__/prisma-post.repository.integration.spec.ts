@@ -138,6 +138,34 @@ describe('PrismaPostRepository (Integration)', () => {
     expect(result.every((post) => post.authorId === author.id)).toBe(true);
   });
 
+  it('should return posts ordered by creation date, newest first', async () => {
+    const author = await createAuthor();
+
+    const olderPost = createPost(author.id);
+    const newerPost = createPost(author.id);
+
+    await postRepository.save(olderPost);
+    await postRepository.save(newerPost);
+
+    await prisma.post.update({
+      where: { id: olderPost.id },
+      data: {
+        createdAt: new Date('2026-01-10T10:00:00.000Z'),
+      },
+    });
+
+    await prisma.post.update({
+      where: { id: newerPost.id },
+      data: {
+        createdAt: new Date('2026-02-10T10:00:00.000Z'),
+      },
+    });
+
+    const result = await postRepository.findByAuthorId(author.id);
+
+    expect(result.map((post) => post.id)).toEqual([newerPost.id, olderPost.id]);
+  });
+
   it('should return an empty array when author has no posts', async () => {
     const author = await createAuthor();
 

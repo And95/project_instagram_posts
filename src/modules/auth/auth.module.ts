@@ -80,6 +80,6 @@ import {
       inject: [ConfigService],
     },
   ],
-  exports: [JwtAuthGuard],
+  exports: [JwtAuthGuard, TOKEN_VERIFIER],
 })
 export class AuthModule {}

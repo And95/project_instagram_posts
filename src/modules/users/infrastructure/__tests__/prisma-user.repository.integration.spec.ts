@@ -5,17 +5,17 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { ConfigService } from '@nestjs/config';
 
-import { PrismaService } from '../../../../../infrastructure/database/prisma.service.js';
+import { PrismaService } from '../../../../infrastructure/database/prisma.service.js';
 
-import { PrismaUserRepository } from '../prisma-user.repository.js';
+import { PrismaUserRepository } from '../repositories/prisma-user.repository.js';
 
-import { User } from '../../../domain/entities/user.entity.js';
-import { Email } from '../../../domain/value-objects/email.vo.js';
-import { Username } from '../../../domain/value-objects/username.vo.js';
+import { User } from '../../domain/entities/user.entity.js';
+import { Email } from '../../domain/value-objects/email.vo.js';
+import { Username } from '../../domain/value-objects/username.vo.js';
 
-import { UserEmailAlreadyExistsError } from '../../../domain/exceptions/user-email-already-exists.error.js';
+import { UserEmailAlreadyExistsError } from '../../domain/exceptions/user-email-already-exists.error.js';
 
-import { UsernameAlreadyExistsError } from '../../../domain/exceptions/username-already-exists.error.js';
+import { UsernameAlreadyExistsError } from '../../domain/exceptions/username-already-exists.error.js';
 
 describe('PrismaUserRepository (Integration)', () => {
   let prisma: PrismaService;

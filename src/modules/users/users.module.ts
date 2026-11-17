@@ -4,6 +4,7 @@ import { CreateUserUseCase } from './application/use-cases/create-user.use-case.
 import type { UserRepository } from './domain/repositories/user.repository.js';
 import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.repository.js';
 import { GetCurrentUserUseCase } from './application/use-cases/get-current-user.use-case.js';
+import { GetUserByIdUseCase } from './application/use-cases/get-user-by-id.use-case.js';
 
 export const USER_REPOSITORY = Symbol('USER_REPOSITORY');
 
@@ -29,8 +30,20 @@ export const USER_REPOSITORY = Symbol('USER_REPOSITORY');
       },
       inject: [USER_REPOSITORY],
     },
+    {
+      provide: GetUserByIdUseCase,
+      useFactory: (userRepository: UserRepository) => {
+        return new GetUserByIdUseCase(userRepository);
+      },
+      inject: [USER_REPOSITORY],
+    },
   ],
 
-  exports: [CreateUserUseCase, GetCurrentUserUseCase, USER_REPOSITORY],
+  exports: [
+    CreateUserUseCase,
+    GetCurrentUserUseCase,
+    GetUserByIdUseCase,
+    USER_REPOSITORY,
+  ],
 })
 export class UsersModule {}

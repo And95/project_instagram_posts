@@ -23,6 +23,11 @@ type AuthenticatedIdentityOutput {
   id: ID!
 }
 
+input CreatePostGraphqlInput {
+  caption: String
+  imageUrl: String!
+}
+
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
@@ -40,12 +45,31 @@ input LoginGraphqlInput {
 }
 
 type Mutation {
+  createPost(input: CreatePostGraphqlInput!): PostOutput!
   login(input: LoginGraphqlInput!): AuthPayloadOutput!
   registerUser(input: RegisterUserGraphqlInput!): AuthUserOutput!
 }
 
+type PostAuthorOutput {
+  avatarUrl: String
+  displayName: String!
+  id: String!
+  username: String!
+}
+
+type PostOutput {
+  author: PostAuthorOutput!
+  authorId: String!
+  caption: String
+  createdAt: DateTime!
+  id: String!
+  imageUrl: String!
+  updatedAt: DateTime!
+}
+
 type Query {
   authenticatedIdentity: AuthenticatedIdentityOutput!
+  getPostById(id: String!): PostOutput
   health: HealthStatusOutput!
   me: AuthUserOutput!
 }
