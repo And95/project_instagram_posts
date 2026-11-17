@@ -14,17 +14,22 @@ import { UserEmailAlreadyExistsError } from '../../../../users/domain/exceptions
 import { UsernameAlreadyExistsError } from '../../../../users/domain/exceptions/username-already-exists.error.js';
 
 describe('RegisterUserUseCase', () => {
-  let useCase: RegisterUserUseCase;
+  const findByEmail = vi.fn<AuthAccountRepository['findByEmail']>();
+  const findByUsername = vi.fn<AuthAccountRepository['findByUsername']>();
+  const createAccount = vi.fn<AuthAccountRepository['createAccount']>();
+
+  const hash = vi.fn<PasswordHasher['hash']>();
+  const verify = vi.fn<PasswordHasher['verify']>();
 
   const authAccountRepository: AuthAccountRepository = {
-    createAccount: vi.fn(),
-    findByEmail: vi.fn(),
-    findByUsername: vi.fn(),
+    findByEmail,
+    findByUsername,
+    createAccount,
   };
 
   const passwordHasher: PasswordHasher = {
-    hash: vi.fn(),
-    verify: vi.fn(),
+    hash,
+    verify,
   };
 
   const validInput: RegisterUserInput = {
@@ -34,16 +39,15 @@ describe('RegisterUserUseCase', () => {
     password: 'StrongPass123',
   };
 
+  let useCase: RegisterUserUseCase;
+
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(authAccountRepository.findByEmail).mockResolvedValue(null);
-
-    vi.mocked(authAccountRepository.findByUsername).mockResolvedValue(null);
-
-    vi.mocked(authAccountRepository.createAccount).mockResolvedValue(undefined);
-
-    vi.mocked(passwordHasher.hash).mockResolvedValue('hashed-password');
+    findByEmail.mockResolvedValue(null);
+    findByUsername.mockResolvedValue(null);
+    createAccount.mockResolvedValue(undefined);
+    hash.mockResolvedValue('hashed-password');
 
     useCase = new RegisterUserUseCase(authAccountRepository, passwordHasher);
   });
@@ -54,9 +58,8 @@ describe('RegisterUserUseCase', () => {
     expect(user.email.value).toBe(validInput.email);
     expect(user.username.value).toBe(validInput.username);
 
-    expect(passwordHasher.hash).toHaveBeenCalledWith(validInput.password);
-
-    expect(authAccountRepository.createAccount).toHaveBeenCalledOnce();
+    expect(hash).toHaveBeenCalledWith(validInput.password);
+    expect(createAccount).toHaveBeenCalledOnce();
   });
 
   it('should reject an invalid email', async () => {
@@ -67,7 +70,7 @@ describe('RegisterUserUseCase', () => {
       }),
     ).rejects.toThrow(InvalidEmailError);
 
-    expect(passwordHasher.hash).not.toHaveBeenCalled();
+    expect(hash).not.toHaveBeenCalled();
   });
 
   it('should reject an invalid username', async () => {
@@ -78,7 +81,7 @@ describe('RegisterUserUseCase', () => {
       }),
     ).rejects.toThrow(InvalidUsernameError);
 
-    expect(passwordHasher.hash).not.toHaveBeenCalled();
+    expect(hash).not.toHaveBeenCalled();
   });
 
   it('should reject a password shorter than eight characters', async () => {
@@ -89,11 +92,11 @@ describe('RegisterUserUseCase', () => {
       }),
     ).rejects.toThrow(InvalidPasswordError);
 
-    expect(passwordHasher.hash).not.toHaveBeenCalled();
+    expect(hash).not.toHaveBeenCalled();
   });
 
   it('should reject an existing email', async () => {
-    vi.mocked(authAccountRepository.findByEmail).mockResolvedValue({
+    findByEmail.mockResolvedValue({
       user: {} as never,
       credential: {} as never,
     });
@@ -102,11 +105,11 @@ describe('RegisterUserUseCase', () => {
       UserEmailAlreadyExistsError,
     );
 
-    expect(passwordHasher.hash).not.toHaveBeenCalled();
+    expect(hash).not.toHaveBeenCalled();
   });
 
   it('should reject an existing username', async () => {
-    vi.mocked(authAccountRepository.findByUsername).mockResolvedValue({
+    findByUsername.mockResolvedValue({
       user: {} as never,
       credential: {} as never,
     });
@@ -115,23 +118,19 @@ describe('RegisterUserUseCase', () => {
       UsernameAlreadyExistsError,
     );
 
-    expect(passwordHasher.hash).not.toHaveBeenCalled();
+    expect(hash).not.toHaveBeenCalled();
   });
 
   it('should propagate password hashing errors', async () => {
-    vi.mocked(passwordHasher.hash).mockRejectedValue(
-      new Error('Hashing failed'),
-    );
+    hash.mockRejectedValue(new Error('Hashing failed'));
 
     await expect(useCase.execute(validInput)).rejects.toThrow('Hashing failed');
 
-    expect(authAccountRepository.createAccount).not.toHaveBeenCalled();
+    expect(createAccount).not.toHaveBeenCalled();
   });
 
   it('should propagate account persistence errors', async () => {
-    vi.mocked(authAccountRepository.createAccount).mockRejectedValue(
-      new Error('Persistence failed'),
-    );
+    createAccount.mockRejectedValue(new Error('Persistence failed'));
 
     await expect(useCase.execute(validInput)).rejects.toThrow(
       'Persistence failed',
