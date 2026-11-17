@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ForbiddenException,
-  NotFoundException,
   UseGuards,
 } from '@nestjs/common';
 
@@ -38,6 +37,7 @@ import { UpdatePostGraphqlInput } from './inputs/update-post.input.js';
 import { PostNotFoundError } from '../../domain/exceptions/post-not-found.error.js';
 import { PostOwnershipError } from '../../domain/exceptions/post-ownership.error.js';
 import { DeletePostUseCase } from '../../application/use-cases/delete-post.use-case.js';
+import { GraphQLError } from 'graphql';
 
 @Resolver(() => PostOutput)
 export class PostsResolver {
@@ -81,7 +81,11 @@ export class PostsResolver {
     const author = await this.getUserByIdUseCase.execute(post.authorId);
 
     if (!author) {
-      throw new NotFoundException('Post author not found.');
+      throw new GraphQLError('Post author not found.', {
+        extensions: {
+          code: 'NOT_FOUND',
+        },
+      });
     }
 
     return this.toAuthorOutput(author);
@@ -151,16 +155,19 @@ export class PostsResolver {
       throw new BadRequestException(error.message);
     }
 
-    if (error instanceof UserNotFoundError) {
-      throw new NotFoundException('User not found.');
-    }
-
-    if (error instanceof PostNotFoundError) {
-      throw new NotFoundException('Post not found.');
+    if (
+      error instanceof UserNotFoundError ||
+      error instanceof PostNotFoundError
+    ) {
+      throw new GraphQLError(error.message, {
+        extensions: {
+          code: 'NOT_FOUND',
+        },
+      });
     }
 
     if (error instanceof PostOwnershipError) {
-      throw new ForbiddenException('You are not allowed to update this post.');
+      throw new ForbiddenException('You are not allowed to modify this post.');
     }
 
     throw error;
